@@ -1,6 +1,10 @@
 # backup files
 *~
 
+# bin obj dir
+bin/
+obj/
+
 # Object files
 *.o
 *.ko
