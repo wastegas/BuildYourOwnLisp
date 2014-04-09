@@ -29,7 +29,7 @@ int main(int argc, char** argv)
         add_history(input);
 
         /* echo input back to user */
-        printf("No you're a %s\n", input);
+        printf("\'%s\'? What do you mean?\n", input);
 
         /* Free retrieved input */
         free(input);    // housekeeping for editline
