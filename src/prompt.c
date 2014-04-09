@@ -2,10 +2,11 @@
 #include <stdlib.h>
 
 #include <editline/readline.h>
-/* not needed for osx 
- * #include <editline/history.h>
- */
 
+#ifndef __APPLE__
+/* not needed for osx */
+#include <editline/history.h>
+#endif
 
 /* Declare a static buffer for user input of maximum size 2048 */
 //static char input[2048]; --- using editline functions now
