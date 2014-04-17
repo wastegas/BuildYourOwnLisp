@@ -53,6 +53,46 @@ lval* lval_err(char* m) {
     return v;
 }
 
+/* construct a pointer to a new symbol lval */
+lval* lval_sym(char * s) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_SYM;
+    v->sym = malloc(strlen(s) + 1);
+    strcpy(v->sym, s);
+    return v;
+}
+
+/* a pointer to a new empty Sexpr lval */
+lval* lval_sexpr(void) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_SEXPR;
+    v->count = 0;
+    v->cell = NULL;
+    return v;
+}
+
+void lval_del(lval* v) {
+
+    switch(v->type) {
+        /* do nothing special for number type */
+        case LVAL_NUM: break;
+
+        /* for Err or Sym free the string data */
+        case LVAL_ERR: free(v->err); break;
+        case LVAL_SYM: free(v->sym); break;
+        
+        /*if Sexpr then delete all elements inside */
+        case LVAL_SEXPR:
+            for (int i = 0; i < v->count ; i++) {
+                lval_del(v->cell[i]);
+            }
+            /* free memory allocated with pointers */
+            free(v->cell);
+            break;
+    }
+    free(v);
+}
+
 /* print an "lval" */
 void lval_print(lval v) {
     switch(v.type) {
