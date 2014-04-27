@@ -144,7 +144,6 @@ void lval_print(lval* v) {
     }
 }
 
-/* print an "lval" followed by a newline */
 void lval_println(lval* v) { 
     lval_print(v);
     putchar('\n');
@@ -302,6 +301,7 @@ lval* lval_read(mpc_ast_t* t) {
     lval* x = NULL;
     if(strcmp(t->tag, ">") == 0) { x = lval_sexpr(); }
     if(strcmp(t->tag, "sexpr")) { x = lval_sexpr(); }
+    if(strcmp(t->tag, "qexpr")) { x = lval_qexpr(); }
 
     /* fill this list with any valid expression contained within */
     for (int i = 0; i < t->children_num; i++) {
@@ -330,7 +330,7 @@ int main(int argc, char** argv)
     mpca_lang(MPC_LANG_DEFAULT,
         "                                                       \
           number    : /-?[0-9]+/ ;                              \
-          symbol    : '+' | '-' | '*' | '/' ;                   \
+          symbol    : \"list\" | \"head\" | \"tail\" | \"eval\" | \"join\" | '+' | '-' | '*' | '/' ;                   \
           sexpr     : '(' <expr>* ')';                          \
           qexpr     : '{' <expr>* '}';                          \
           expr      : <number> | <symbol> | <sexpr> ;           \
