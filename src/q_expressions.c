@@ -333,7 +333,7 @@ int main(int argc, char** argv)
           symbol    : \"list\" | \"head\" | \"tail\" | \"eval\" | \"join\" | '+' | '-' | '*' | '/' ;                   \
           sexpr     : '(' <expr>* ')';                          \
           qexpr     : '{' <expr>* '}';                          \
-          expr      : <number> | <symbol> | <sexpr> ;           \
+          expr      : <number> | <symbol> | <sexpr> | <qexpr> ;           \
           lispy     : /^/ <expr>* /$/ ;                         \
         ",
     Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
