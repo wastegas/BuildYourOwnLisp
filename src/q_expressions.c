@@ -213,7 +213,6 @@ lval* builtin_op(lval* a, char* op) {
     }
 
     lval* x = lval_pop(a, 0);
-
     if ((strcmp(op, "-") == 0) && a->count == 0) { x->num = -x->num; }
 
     while (a->count > 0) {
@@ -274,7 +273,7 @@ lval* lval_eval_sexpr(lval* v) {
     }
 
     /* call builtin with operator */
-    lval * result = builtin(v, f->sym);
+    lval * result = builtin_op(v, f->sym);
     lval_del(f);
     return result;
 }
@@ -300,8 +299,8 @@ lval* lval_read(mpc_ast_t* t) {
     /* if root (>) or sexpr then create empty list */
     lval* x = NULL;
     if(strcmp(t->tag, ">") == 0) { x = lval_sexpr(); }
-    if(strcmp(t->tag, "sexpr")) { x = lval_sexpr(); }
-    if(strcmp(t->tag, "qexpr")) { x = lval_qexpr(); }
+    if(strstr(t->tag, "sexpr")) { x = lval_sexpr(); }
+    if(strstr(t->tag, "qexpr")) { x = lval_qexpr(); }
 
     /* fill this list with any valid expression contained within */
     for (int i = 0; i < t->children_num; i++) {
@@ -309,7 +308,7 @@ lval* lval_read(mpc_ast_t* t) {
         if(strcmp(t->children[i]->contents, ")") ==0) { continue; }
         if(strcmp(t->children[i]->contents, "}") ==0) { continue; }
         if(strcmp(t->children[i]->contents, "{") ==0) { continue; }
-        if(strcmp(t->children[i]->contents, "regex")==0) {continue;}
+        if(strcmp(t->children[i]->tag, "regex")==0) {continue;}
         x = lval_add(x, lval_read(t->children[i]));
     }
 
