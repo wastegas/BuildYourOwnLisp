@@ -71,10 +71,7 @@ lval* lval_qexpr(void) {
 void lval_del(lval* v) {
 
     switch(v->type) {
-        /* do nothing special for number type */
         case LVAL_NUM: break;
-
-        /* for Err or Sym free the string data */
         case LVAL_ERR: free(v->err); break;
         case LVAL_SYM: free(v->sym); break;
         
@@ -99,16 +96,9 @@ lval* lval_add(lval* v, lval* x) {
 }
 
 lval* lval_pop(lval* v, int i) {
-    /* find item at i */
     lval* x = v->cell[i];
-
-    /* shift the memory following the item at "i" over to the top of it */
     memmove(&v->cell[i], &v->cell[i+1], sizeof(lval*) * (v->count-i-1));
-
-    /* decrease the count of items in the list */
     v->count--;
-
-    /* reallocate the memory used */
     v->cell = realloc(v->cell, sizeof(lval*) * v->count);
     return x;
 }
@@ -135,10 +125,8 @@ void lval_expr_print(lval* v, char open, char close) {
     putchar(open);
     for (int i = 0; i < v->count; i++) {
 
-        /* print value contained within */
         lval_print(v->cell[i]);
 
-        /* don't print trailing space if last element */
         if (i != (v->count-1)) {
             putchar(' ');
         }
@@ -146,14 +134,13 @@ void lval_expr_print(lval* v, char open, char close) {
     putchar(close);
 }
 
-
-/* print an "lval" */
 void lval_print(lval* v) {
     switch(v->type) {
         case LVAL_NUM: printf("%li", v->num); break;
         case LVAL_ERR: printf("Error: %s", v->err); break;
         case LVAL_SYM: printf("%s", v->sym); break;
         case LVAL_SEXPR: lval_expr_print(v, '(',')'); break;
+        case LVAL_QEXPR: lval_expr_print(v, '{','}'); break;
     }
 }
 
