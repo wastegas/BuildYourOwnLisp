@@ -9,12 +9,18 @@
 #include <editline/history.h>
 #endif
 
+struct lval;
+struct lenv;
+typedef struct lval lval;
+typedef struct lenv lenv;
+
 
 /* create enum for possible lval types */
 enum {
     LVAL_ERR,
     LVAL_NUM,
     LVAL_SYM,
+    LVAL_FUN,
     LVAL_SEXPR,
     LVAL_QEXPR
 };
@@ -24,9 +30,10 @@ typedef struct lval {
     long num;
     char* err;
     char* sym;
+    lbuiltin fun;
 
     int count;
-    struct lval** cell;
+    lval** cell;
 } lval;
 
 lval* lval_num(long x) {
@@ -39,8 +46,16 @@ lval* lval_num(long x) {
 lval* lval_err(char* m) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_ERR;
-    v->err = malloc(strlen(m) + 1);
-    strcpy(v->err, m);
+    
+    va_list va;
+    va_start(va, fmt);
+
+    v->err = malloc(512);
+
+    vsnprintf(v->err, 511, fmtm va);
+    
+    v->err = realloc(v->err, strlen(v->err) + 1);
+    va_end(va);
     return v;
 }
 
@@ -86,6 +101,30 @@ void lval_del(lval* v) {
             break;
     }
     free(v);
+}
+
+lval* lval_copy(lval* v) {
+
+    lval* x = malloc(sizeof(lval));
+    x->type = v->type;
+
+    switch(v->type) {
+
+        case LVAL_FUN: x->fun = v->fun; break;
+        case LVAL_NUM: X->num = v->num; break;
+        case LVAL_ERR: x->err = malloc(strlen(v->err) + 1); strcpy(x->err, v->err); break;
+        case LVAL_SYM: x->sym = malloc(strlen(v->sym) + 1); strcpy(x->sym, v->sym); break;
+        case LVAL_SEXPR:
+        case LVAL_QEXPR:
+            x->count = v->count;
+            x->cell = malloc(sizeof(lval*) * x->count);
+            for (int i = 0; i < x->count; i++) {
+                x-<cell[i] = lval_copy(v->cell[i]);
+            }
+            break;
+    }
+
+    return x;
 }
 
 lval* lval_add(lval* v, lval* x) {
@@ -136,6 +175,7 @@ void lval_expr_print(lval* v, char open, char close) {
 
 void lval_print(lval* v) {
     switch(v->type) {
+        case LVAL_FUN: printf("<function>"); break;
         case LVAL_NUM: printf("%li", v->num); break;
         case LVAL_ERR: printf("Error: %s", v->err); break;
         case LVAL_SYM: printf("%s", v->sym); break;
@@ -157,6 +197,47 @@ lval* builtin_list(lval* a) {
     a->type = LVAL_QEXPR;
     return a;
 }
+
+char* ltype_name(int t) {
+    switch(t) {
+        case LVAL_FUN: return "Function";
+        case LVAL_NUM: return "Number";
+        case LVAL_ERR: return "Error";
+        case LVAL_SYM: return "Symbol";
+        case LVAL_SEXPR: return "S-Expression";
+        case LVAL_QEXPR: return "Q-Expression";
+        default: return "Unknown";
+    }
+}
+
+/* Lisp Environment */
+
+struct lenv {
+    int count;
+    char** syms;
+    lval** vals;
+}
+
+lenv* lenv_new(void) {
+
+    lenv* e = malloc(sizeof(lenv));
+    e->count = 0;
+    e->syms = NULL;
+    e->vals = NULL;
+    return e;
+}
+
+void lenv_del(lenv* e) {
+    for (int i = 0; i < e->count; i++) {
+        free(e->syms[i]);
+        lval_del(e->vals[i]);
+    }
+
+    free(e->syms);
+    free(e->vals);
+    free(e);
+}
+
 
 lval* builtin_head(lval* a) {
     LASSERT(a, (a->count== 1), "Function 'head' passed too many arguments");
