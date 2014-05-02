@@ -238,6 +238,33 @@ void lenv_del(lenv* e) {
     free(e);
 }
 
+lval* lenv_get(lenv* e lval* k) {
+    for (int i = 0; i < e->count; i++) {
+        if (strcmp(e->syms[i], k->sym) == 0) {
+            return lval_copy(e->vals[i])
+        }
+    }
+        return lval_err("Unbound Symbol '%s'", k->sym);
+}
+
+void lenv_put(lenv* e, lval* k, lval* v) {
+    for (int i = 0; i < e->count; i++) {
+        if (strcmp(e->syms[i], k->sym) == 0) {
+            lval_del(e->vals[i]);
+            e->vals[i] = lval_copy(v);
+            return;
+        }
+    }
+
+    e->count++;
+    e->vals = realloc(e->vals, sizeof(lval*) * e->count);
+    e->syms = realloc(e->syms, sizeof(char*) * e->count);
+
+    e->vals[e->count-1] = lval_copy(v);
+    e->syms[e->count-1] = malloc(strlen(k->sym)+1);
+    strcpy(e->syms[e->count-1], k->sym);
+}
+
 
 lval* builtin_head(lval* a) {
     LASSERT(a, (a->count== 1), "Function 'head' passed too many arguments");
