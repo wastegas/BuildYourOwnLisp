@@ -265,6 +265,21 @@ void lenv_put(lenv* e, lval* k, lval* v) {
     strcpy(e->syms[e->count-1], k->sym);
 }
 
+#define LASSERT(args, cond, fmt, ...) \
+    if (!(cond)) { \
+        lval* err = lval_err(fmt, ##__VA_ARGS__); \
+        lval_del(args); \
+        return err; \
+    }
+
+#define LASSERT_TYPE(func, args, index, expect) \
+    LASSERT(args, args->cell[index]->type == expect, \
+      "Function '%s' passed incorrect type for argument %i. Got %s, \
+       Expected %s", func, index, ltype_name(args->cell[index]->type), \
+          ltype_name(expect))
+
+
+
 
 lval* builtin_head(lval* a) {
     LASSERT(a, (a->count== 1), "Function 'head' passed too many arguments");
