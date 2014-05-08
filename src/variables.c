@@ -376,6 +376,11 @@ lval* builtin_op(lenv* e, lval* a, char* op) {
     return x;
 }
 
+lval *builtin_add(lenv* e, lval* a) { return builtin_op(e, a, "+"); }
+lval *builtin_sub(lenv* e, lval* a) { return builtin_op(e, a, "-"); }
+lval *builtin_mul(lenv* e, lval* a) { return builtin_op(e, a, "*"); }
+lbal *builtin_div(lenv* e, lval* a) { return builtin_op(e, a, "/"); }
+
 lval* builtin(lval* a, char* func) {
     if (strcmp("list", func) == 0) { return builtin_list(a); }
     if (strcmp("head", func) == 0) { return builtin_head(a); }
