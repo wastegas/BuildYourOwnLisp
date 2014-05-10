@@ -404,18 +404,32 @@ lval *builtin_def(lenv* e, lval* a) {
     return lval_sexpr();
 }
 
-lval* builtin(lval* a, char* func) {
-    if (strcmp("list", func) == 0) { return builtin_list(a); }
-    if (strcmp("head", func) == 0) { return builtin_head(a); }
-    if (strcmp("tail", func) == 0) { return builtin_tail(a); }
-    if (strcmp("join", func) == 0) { return builtin_join(a); }
-    if (strcmp("eval", func) == 0) { return builtin_eval(a); }
-    if (strstr("+-/*", func)) { return builtin_op(a, func); }
-    lval_del(a);
-    return lval_err("Unknown Function!");
+void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
+    lval* k = lval_sym(name);
+    lval* v = lval_fun(func);
+    lval_put(e, k, v);
+    lval_del(k); lval_del(v);
 }
 
-lval* lval_eval_sexpr(lval* v) {
+void lenv_ad_builtins(lenv* e) {
+    /* variable functions */
+    lenv_add_builtin(e, "def", builtin_def);
+
+    /* list funcitons */
+    lenv_add_builtin(e, "list", builtin_list);
+    lenv_add_builtin(e, "head", builtin_head);
+    lenv_add_builtin(e, "tail", builtin_tail);
+    lenv_add_builtin(e, "eval", builtin_eval);
+    lenv_add_builtin(e, "join", builtin_join);
+
+    /* mathematical functions */
+    lenv_add_builtin(e, "+", builtin_add);
+    lenv_add_builtin(e, "-", builtin_sub);
+    lenv_add_builtin(e, "*", builtin_mul);
+    lenv_add_builtin(e, "/", builtin_div);
+}
+
+lval* lval_eval_sexpr(lenv* e,lval* vi) {
 
     for (int i = 0; i < v->count; i++) {
         v->cell[i] = lval_eval(v->cell[i]);
@@ -430,21 +444,30 @@ lval* lval_eval_sexpr(lval* v) {
     if (v->count == 1 ) { return lval_take(v, 0); }
 
     lval* f = lval_pop(v, 0);
-    if (f->type != LVAL_SYM) {
+    if (f->type != LVAL_FUN) {
+        lval* err = lval_err(
+        ltype_name(f->type), ltype_name(LVAL_FUN));
         lval_del(f); lval_del(v);
-        return lval_err("S-expression does not start with symbol.");
+        return err;
     }
 
     /* call builtin with operator */
-    lval * result = builtin_op(v, f->sym);
+    lval* result = f->fun(e, v);
     lval_del(f);
     return result;
 }
 
-lval* lval_eval(lval* v) {
+lval* lval_eval(lenv* e,lval* v) {
     /* evaluate Sexpressions */
-    if (v->type == LVAL_SEXPR) { return lval_eval_sexpr(v); }
-    /* all other lval types remain the same */
+    if (v->type == LVAL_SYM) {
+        lval* x = lvel_get(e, v);
+        lval_del(v);
+        return x;
+    }
+    if (v->type == LVAL_SEXPR) { 
+        return lval_eval_sexpr(e, v);
+    }
+
     return v;
 }
 
