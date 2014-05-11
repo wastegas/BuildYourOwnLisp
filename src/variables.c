@@ -526,6 +526,9 @@ int main(int argc, char** argv)
     puts("Lispy Version 0.0.0.0.7");
     puts("Press Ctrl-c to Exit\n");
 
+    lenv* e = lenv_new();
+    lenv_add_builtins(e);
+
     while (1)
     {
         char* input = readline("lispy> ");
@@ -548,6 +551,9 @@ int main(int argc, char** argv)
         /* Free retrieved input */
         free(input);    // housekeeping for editline
    }
+
+    lenv_del(e);
+
     /* Undefine and delete our Parsers */
     mpc_cleanup(6, Number, Symbol, Sexpr, Qexpr, Expr, Lispy);
 
