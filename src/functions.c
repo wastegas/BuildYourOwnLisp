@@ -485,26 +485,11 @@ lval* builtin_var(lenv* e, lval* a, char* func) {
 }
 
 lval *builtin_def(lenv* e, lval* a) {
-    LASSERT_TYPE("def", a, 0, LVAL_QEXPR);
+    return builtin_var(e, a, "def"); 
+}
 
-    lval* syms = a->cell[0];
-
-    for (int i = 0; i < syms->count; i++) {
-        LASSERT(a, (syms->cell[i]->type == LVAL_SYM),
-                "Function 'def' cannot define non-symbol. Got %s, Expected %s.",
-                ltype_name(syms->cell[i]->type), ltype_name(LVAL_SYM));
-    }
-
-    LASSERT(a, (syms->count == a->count - 1),
-            "Function 'def' passed too many arguments for symbols. Got %i, Expected %i.",
-            syms->count, a->count-1);
-
-    for (int i = 0; i < syms->count; i++) {
-        lenv_put(e, syms->cell[i], a->cell[i+1]);
-    }
-
-    lval_del(a);
-    return lval_sexpr();
+lval *builtin_put(lenv* e, lval* a) {
+    return builtin_var(e, a, "=");
 }
 
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
