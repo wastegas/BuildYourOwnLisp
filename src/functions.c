@@ -181,7 +181,7 @@ lval* lval_add(lval* v, lval* x) {
 }
 
 lval* lval_join(lval* x, lval* y) {
-    while (y->count) {
+    for (int i = 0; i < y->count; i++) {
         x = lval_add(x, y->cell[i]);
     }
     free(y->cell);
@@ -231,8 +231,8 @@ void lval_print(lval* v) {
         case LVAL_NUM: printf("%li", v->num); break;
         case LVAL_ERR: printf("Error: %s", v->err); break;
         case LVAL_SYM: printf("%s", v->sym); break;
-        case LVAL_SEXPR: lval_expr_print(v, '(',')'); break;
-        case LVAL_QEXPR: lval_expr_print(v, '{','}'); break;
+        case LVAL_SEXPR: lval_print_expr(v, '(',')'); break;
+        case LVAL_QEXPR: lval_print_expr(v, '{','}'); break;
     }
 }
 
@@ -256,6 +256,7 @@ char* ltype_name(int t) {
 /* Lisp Environment */
 
 struct lenv {
+    lenv* par;
     int count;
     char** syms;
     lval** vals;
@@ -470,9 +471,9 @@ lval* builtin_var(lenv* e, lval* a, char* func) {
 
     lval* syms = a->cell[0];
     for (int i = 0; i < syms->count; i++) {
-        LASSERT(a, syms->cell[i]->type == LVAL_SYM),
+        LASSERT(a, (syms->cell[i]->type == LVAL_SYM),
             "Function '%s' cannot define non-symbol, Got %s, Expected %s.",
-            func, ltype_name(syms->cell[i]->type), ltype_name(LVAL_SYM);
+            func, ltype_name(syms->cell[i]->type), ltype_name(LVAL_SYM));
     }
 
     LASSERT(a, (syms->count == a->count-1),
@@ -497,7 +498,7 @@ lval *builtin_put(lenv* e, lval* a) {
 
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
-    lval* v = lval_fun(func);
+    lval* v = lval_builtin(func);
     lenv_put(e, k, v);
     lval_del(k); lval_del(v);
 }
@@ -521,7 +522,7 @@ void lenv_add_builtins(lenv* e) {
 }
 
 lval* lval_call(lenv* e, lval* f, lval* a) {
-    if (f->builtin) { return f->buitin(e, a); }
+    if (f->builtin) { return f->builtin(e, a); }
 
     int given = a->count;
     int total = f->formals->count;
@@ -529,16 +530,15 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
     while (a->count) {
         if(f->formals->count == 0) {
             lval_del(a);
-            return lval_err("Function passed too many arguments. Got *=%i, 
-                    Expected %i.", given, total);
+            return lval_err("Function passed too many arguments. Got %i, Expected %i.", given, total);
         }
 
         lval* sym = lval_pop(f->formals, 0);
-        if (stcmp(sym->sym, "&") == 0) {
+        if (strcmp(sym->sym, "&") == 0) {
 
-            if (if->formals->count != 1) {
+            if (f->formals->count != 1) {
                 lval_del(a);
-                return_err("Function format invalid. Symbol '&' not followed by single symbol");
+                return lval_err("Function format invalid. Symbol '&' not followed by single symbol");
             }
 
             lval* nsym = lval_pop(f->formals, 0);
@@ -560,7 +560,7 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
 
         lval_del(lval_pop(f->formals, 0));
 
-        lval* sym = lval_pop(f->frormals, 0);
+        lval* sym = lval_pop(f->formals, 0);
         lval* val = lval_qexpr();
 
         lenv_put(f->env, sym, val);
@@ -569,7 +569,7 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
     if (f->formals->count == 0) {
         f->env->par = e;
 
-        return builtin_eval(f->env, lval_add(lval_sexpr(), lval_copy(f->ody)));
+        return builtin_eval(f->env, lval_add(lval_sexpr(), lval_copy(f->body)));
     } else {
         return lval_copy(f);
     }
@@ -598,7 +598,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     }
 
     /* call builtin with operator */
-    lval* result = f->fun(e, v);
+    lval* result = lval_call(e, f, v);
     lval_del(f);
     return result;
 }
