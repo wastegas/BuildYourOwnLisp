@@ -517,6 +517,61 @@ void lenv_add_builtins(lenv* e) {
     lenv_add_builtin(e, "/", builtin_div);
 }
 
+lval* lval_call(lenv* e, lval* f, lval* a) {
+    if (f->builtin) { return f->buitin(e, a); }
+
+    int given = a->count;
+    int total = f->formals->count;
+
+    while (a->count) {
+        if(f->formals->count == 0) {
+            lval_del(a);
+            return lval_err("Function passed too many arguments. Got *=%i, 
+                    Expected %i.", given, total);
+        }
+
+        lval* sym = lval_pop(f->formals, 0);
+        if (stcmp(sym->sym, "&") == 0) {
+
+            if (if->formals->count != 1) {
+                lval_del(a);
+                return_err("Function format invalid. Symbol '&' not followed by single symbol");
+            }
+
+            lval* nsym = lval_pop(f->formals, 0);
+            lenv_put(f->env, nsym, builtin_list(e, a));
+            lval_del(sym); lval_del(nsym);
+            break;
+        }
+
+        lval* val = lval_pop(a, 0);
+        lenv_put(f->env, sym, val);
+        lval_del(sym); lval_del(val);
+    }
+    lval_del(a);
+    if (f->formals->count > 0 &&
+            strcmp(f->formals->cell[0]->sym, "&") == 0) {
+        if (f->formals->count != 2) {
+            return lval_err("Function format invalid. Symbol '&' not followed by singl symbol.");
+        }
+
+        lval_del(lval_pop(f->formals, 0));
+
+        lval* sym = lval_pop(f->frormals, 0);
+        lval* val = lval_qexpr();
+
+        lenv_put(f->env, sym, val);
+        lval_del(sym); lval_del(val);
+    }
+    if (f->formals->count == 0) {
+        f->env->par = e;
+
+        return builtin_eval(f->env, lval_add(lval_sexpr(), lval_copy(f->ody)));
+    } else {
+        return lval_copy(f);
+    }
+}
+
 lval* lval_eval_sexpr(lenv* e, lval* v) {
 
     for (int i = 0; i < v->count; i++) {
