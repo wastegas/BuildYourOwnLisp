@@ -91,7 +91,7 @@ lval* lval_lambda(lval* formals, lval* body) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_FUN;
 
-    v->builtion = NULL;
+    v->builtin = NULL;
 
     v->formals = formals;
     v->body = body;
@@ -140,6 +140,8 @@ void lval_del(lval* v) {
     free(v);
 }
 
+lenv* lenv_copy(lenv* e);
+
 lval* lval_copy(lval* v) {
 
     lval* x = malloc(sizeof(lval));
@@ -180,9 +182,10 @@ lval* lval_add(lval* v, lval* x) {
 
 lval* lval_join(lval* x, lval* y) {
     while (y->count) {
-        x = lval_add(x, lval_pop(y, 0));
+        x = lval_add(x, y->cell[i]);
     }
-    lval_del(y);
+    free(y->cell);
+    free(y);
     return x;
 }
 
