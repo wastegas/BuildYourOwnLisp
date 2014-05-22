@@ -614,6 +614,7 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
         lenv_put(f->env, sym, val);
         lval_del(sym); lval_del(val);
     }
+
     if (f->formals->count == 0) {
         f->env->par = e;
 
