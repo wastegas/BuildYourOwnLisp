@@ -30,6 +30,7 @@ enum {
     LVAL_ERR,
     LVAL_NUM,
     LVAL_SYM,
+    LVAL_STR,
     LVAL_FUN,
     LVAL_SEXPR,
     LVAL_QEXPR
@@ -42,7 +43,12 @@ struct lval {
     long num;
     char* err;
     char* sym;
-    lbuiltin fun;
+    char* str;
+
+    lbuiltin builtin;
+    lenv* env;
+    lval* formals;
+    lval* body;
 
     int count;
     lval** cell;
@@ -77,6 +83,14 @@ lval* lval_sym(char * s) {
     v->type = LVAL_SYM;
     v->sym = malloc(strlen(s) + 1);
     strcpy(v->sym, s);
+    return v;
+}
+
+lval* lval_str(char* s) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_STR;
+    v->str = malloc(strlen(s) + 1);
+    strcpy(v->str, s);
     return v;
 }
 
