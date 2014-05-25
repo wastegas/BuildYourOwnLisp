@@ -313,14 +313,15 @@ char* ltype_name(int t) {
 /* Lisp Environment */
 
 struct lenv {
+    lenv* par;
     int count;
     char** syms;
     lval** vals;
 };
 
 lenv* lenv_new(void) {
-
     lenv* e = malloc(sizeof(lenv));
+    e->par = NULL;
     e->count = 0;
     e->syms = NULL;
     e->vals = NULL;
