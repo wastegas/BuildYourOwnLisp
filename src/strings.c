@@ -94,10 +94,22 @@ lval* lval_str(char* s) {
     return v;
 }
 
-lval* lval_fun(lbuiltin func) {
+lval* lval_builtin(lbuiltin func) {
     lval* v = malloc(sizeof(lval));
     v->type = LVAL_FUN;
-    v->fun = func;
+    v->builtin = func;
+    return v;
+}
+
+lenv* lenv_new(void);
+
+lval* lval_lambda(lval* formals, lval* body) {
+    lval* v = malloc(sizeof(lval));
+    v->type = LVAL_FUN;
+    v->builtin = NULL;
+    v->env = lenv_new();
+    v->formals = formals;
+    v->body = body;
     return v;
 }
 
