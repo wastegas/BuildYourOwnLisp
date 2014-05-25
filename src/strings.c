@@ -339,6 +339,20 @@ void lenv_del(lenv* e) {
     free(e);
 }
 
+lenv* lenv_copy(lenv* e) {
+    lenv* n = malloc(sizeof(lenv));
+    n->par = e->par;
+    n->count = e->count;
+    n->syms = malloc(sizeof(char*) * n->count);
+    n->vals = malloc(sizeof(lval*) * n->count);
+    for (int i = 0; i < e->count; i++) {
+        n->syms[i] = malloc(strlen(e->syms[i]) + 1);
+        strcpy(n->syms[i], e->syms[i]);
+        n->vals[i] = lval_copy(e->vals[i]);
+    }
+    return n;
+}
+
 lval* lenv_get(lenv* e, lval* k) {
     for (int i = 0; i < e->count; i++) {
         if (strcmp(e->syms[i], k->sym) == 0) {
