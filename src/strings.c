@@ -359,7 +359,12 @@ lval* lenv_get(lenv* e, lval* k) {
             return lval_copy(e->vals[i]);
         }
     }
+
+    if (e->par) {
+        return lenv_get(e->par, k);
+    } else {
         return lval_err("Unbound Symbol '%s'", k->sym);
+    }
 }
 
 void lenv_put(lenv* e, lval* k, lval* v) {
