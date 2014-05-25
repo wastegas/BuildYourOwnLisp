@@ -129,10 +129,19 @@ lval* lval_qexpr(void) {
     return v;
 }
 
+void lenv_del(lenv* e);
+
 void lval_del(lval* v) {
 
     switch(v->type) {
         case LVAL_NUM: break;
+        case LVAL_FUN:
+            if (!v->builtin) {
+                lenv_del(v->env);
+                lval_del(v->formals);
+                lval_del(v->body);
+            }
+            break;
         case LVAL_ERR: free(v->err); break;
         case LVAL_SYM: free(v->sym); break;
         
