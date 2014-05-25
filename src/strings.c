@@ -200,21 +200,20 @@ lval* lval_add(lval* v, lval* x) {
     return v;
 }
 
+lval* lval_join(lval* x, lval* y) {
+    for (int i = 0; i < y->count; i++) {
+        x = lval_add(x, y->cell[i]);
+    }
+    free(y->cell);
+    free(y);
+    return x;
+}
+
 lval* lval_pop(lval* v, int i) {
     lval* x = v->cell[i];
     memmove(&v->cell[i], &v->cell[i+1], sizeof(lval*) * (v->count-i-1));
     v->count--;
     v->cell = realloc(v->cell, sizeof(lval*) * v->count);
-    return x;
-}
-
-lval* lval_join(lval* x, lval* y) {
-    
-    while (y->count) {
-        x = lval_add(x, lval_pop(y, 0));
-    }
-
-    lval_del(y);
     return x;
 }
 
@@ -226,18 +225,18 @@ lval* lval_take(lval* v, int i) {
 
 void lval_print(lval *v);
 
-void lval_expr_print(lval* v, char open, char close) {
+void lval_print_expr(lval* v, char open, char close) {
     putchar(open);
     for (int i = 0; i < v->count; i++) {
-
         lval_print(v->cell[i]);
-
         if (i != (v->count-1)) {
             putchar(' ');
         }
     }
     putchar(close);
 }
+
+
 
 void lval_print(lval* v) {
     switch(v->type) {
