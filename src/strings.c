@@ -379,10 +379,14 @@ void lenv_put(lenv* e, lval* k, lval* v) {
     e->count++;
     e->vals = realloc(e->vals, sizeof(lval*) * e->count);
     e->syms = realloc(e->syms, sizeof(char*) * e->count);
-
     e->vals[e->count-1] = lval_copy(v);
     e->syms[e->count-1] = malloc(strlen(k->sym)+1);
     strcpy(e->syms[e->count-1], k->sym);
+}
+
+void lenv_def(lenv* e, lval* k, lval* v) {
+    while (e->par) { e = e->par; }
+    lenv_put(e, k, v);
 }
 
 #define LASSERT(args, cond, fmt, ...)   \
