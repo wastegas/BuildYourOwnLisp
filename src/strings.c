@@ -144,7 +144,7 @@ void lval_del(lval* v) {
             break;
         case LVAL_ERR: free(v->err); break;
         case LVAL_SYM: free(v->sym); break;
-        
+        case LVAL_STR: free(v->str); break; 
         /*if Sexpr then delete all elements inside */
         case LVAL_QEXPR:
         case LVAL_SEXPR:
@@ -158,6 +158,8 @@ void lval_del(lval* v) {
     free(v);
 }
 
+lenv* lenv_copy(lenv* e);
+
 lval* lval_copy(lval* v) {
 
     lval* x = malloc(sizeof(lval));
@@ -165,7 +167,16 @@ lval* lval_copy(lval* v) {
 
     switch(v->type) {
 
-        case LVAL_FUN: x->fun = v->fun; break;
+        case LVAL_FUN:
+            if(v->builtin) {
+                x->builtin = v->builtin;
+            } else {
+                x->builtin = NULL;
+                x->env = lenv_copy(v->env);
+                x->formals = lval_copy(v->formals);
+                x->body = lval_copy(v->body);
+            }
+            break;
         case LVAL_NUM: x->num = v->num; break;
         case LVAL_ERR: x->err = malloc(strlen(v->err) + 1); strcpy(x->err, v->err); break;
         case LVAL_SYM: x->sym = malloc(strlen(v->sym) + 1); strcpy(x->sym, v->sym); break;
