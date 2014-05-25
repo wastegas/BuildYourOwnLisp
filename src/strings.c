@@ -260,14 +260,41 @@ void lval_print(lval* v) {
         case LVAL_ERR: printf("Error: %s", v->err); break;
         case LVAL_SYM: printf("%s", v->sym); break;
         case LVAL_STR: lval_print_str(v); break;
-        case LVAL_SEXPR: lval_expr_print(v, '(',')'); break;
-        case LVAL_QEXPR: lval_expr_print(v, '{','}'); break;
+        case LVAL_SEXPR: lval_print_expr(v, '(',')'); break;
+        case LVAL_QEXPR: lval_print_expr(v, '{','}'); break;
     }
 }
 
 void lval_println(lval* v) { 
     lval_print(v);
     putchar('\n');
+}
+
+int lval_eq(lval* x, lval* y) {
+    if (x->type != y->type) { return 0; }
+
+    switch (x->type) {
+        case LVAL_NUM: return (x->num == y->num);
+        case LVAL_ERR: return (strcmp(x->err, y->err) == 0);
+        case LVAL_SYM: return (strcmp(x->sym, y->sym) == 0);
+        case LVAL_STR: return (strcmp(x->str, y->str) == 0);
+        case LVAL_FUN:
+            if (x->builtin || y->builtin) {
+                return x->builtin == y->builtin;
+            } else {
+                return lval_eq(x->formals, y->formals) && lval_eq(x->body, y->body);
+            }
+        case LVAL_QEXPR:
+        case LVAL_SEXPR;
+            if (x->count != y->count) { return 0; }
+            for (int i = 0; i < x->count; i++) {
+                if (!lval_eq(x->cell[i], y->cell[i]))
+                    return 0;
+            }
+            return 1;
+        break;
+    }
+    return 0;
 }
 
 char* ltype_name(int t) {
