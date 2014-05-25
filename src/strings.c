@@ -236,7 +236,13 @@ void lval_print_expr(lval* v, char open, char close) {
     putchar(close);
 }
 
-
+void lval_print_str(lval* v) {
+    char* escaped = malloc(strlen(v->str) + 1);
+    strcpy(escaped, v->str);
+    escaped = mpcf_escape(escaped);
+    printf("\"%s\"", escaped);
+    free(escaped);
+}
 
 void lval_print(lval* v) {
     switch(v->type) {
