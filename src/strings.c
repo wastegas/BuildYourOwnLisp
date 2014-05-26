@@ -523,7 +523,7 @@ lval *builtin_sub(lenv* e, lval* a) { return builtin_op(e, a, "-"); }
 lval *builtin_mul(lenv* e, lval* a) { return builtin_op(e, a, "*"); }
 lval *builtin_div(lenv* e, lval* a) { return builtin_op(e, a, "/"); }
 
-lval *builtin_def(lenv* e, lval* a) {
+lval *builtin_var(lenv* e, lval* a) {
     LASSERT_TYPE("def", a, 0, LVAL_QEXPR);
 
     lval* syms = a->cell[0];
@@ -539,12 +539,20 @@ lval *builtin_def(lenv* e, lval* a) {
             syms->count, a->count-1);
 
     for (int i = 0; i < syms->count; i++) {
-        lenv_put(e, syms->cell[i], a->cell[i+1]);
+        if (strcpm(func, "def") == 0) {
+            lenv_def(e, syms->cell[i], a->cell[i + 1]);
+        }
+        if (strcmp(func, "=") == 0) {
+            lenv_put(e, syms->cell[i], a->cell[i + 1]);
+        }
     }
 
     lval_del(a);
     return lval_sexpr();
 }
+
+lval* builtin_def(lenv* e, lval* a) { return builtin_var(e, a, "def"); }
+lval* builtin_put(lenv* e, lval* a) { return builtin_var(a, e, "="); }
 
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
