@@ -568,6 +568,20 @@ lval* builtin_ord(lenv* e, lval* a, char* op) {
     return lval_num(r);
 }
 
+lval* builtin_gt(lenv* e, lval* a) { return builtin_ord(e, a, ">"); }
+lval* builtin_lt(lenv* e, lval* a) { return builtin_ord(e, a, "<"); }
+lval* builtin_ge(lenv* e, lval* a) { return builtin_ord(e, a, ">=");}
+lval* builtin_le(lenv* e, lval* a) { return builtin_ord(e, a, "<=");}
+
+lval* builtin_cmp(lenv* e, lval* a, char* op) {
+    LASSERT_NUM(op, a, 2);
+    int r;
+    if (strcmp(op, "==") == 0) { r = lval_eq(a->cell[0], a->cell[1]); }
+    if (strcmp(op, "!=") == 0) { r = !lval_eq(a->cell[0], a->cell[1]);}
+    lval_del(a);
+    return lval_num(r);
+}
+
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
     lval* v = lval_fun(func);
