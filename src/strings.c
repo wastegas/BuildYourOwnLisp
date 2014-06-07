@@ -285,7 +285,7 @@ int lval_eq(lval* x, lval* y) {
                 return lval_eq(x->formals, y->formals) && lval_eq(x->body, y->body);
             }
         case LVAL_QEXPR:
-        case LVAL_SEXPR;
+        case LVAL_SEXPR:
             if (x->count != y->count) { return 0; }
             for (int i = 0; i < x->count; i++) {
                 if (!lval_eq(x->cell[i], y->cell[i]))
@@ -523,7 +523,7 @@ lval *builtin_sub(lenv* e, lval* a) { return builtin_op(e, a, "-"); }
 lval *builtin_mul(lenv* e, lval* a) { return builtin_op(e, a, "*"); }
 lval *builtin_div(lenv* e, lval* a) { return builtin_op(e, a, "/"); }
 
-lval *builtin_var(lenv* e, lval* a) {
+lval *builtin_var(lenv* e, lval* a, char* func) {
     LASSERT_TYPE("def", a, 0, LVAL_QEXPR);
 
     lval* syms = a->cell[0];
@@ -539,7 +539,7 @@ lval *builtin_var(lenv* e, lval* a) {
             syms->count, a->count-1);
 
     for (int i = 0; i < syms->count; i++) {
-        if (strcpm(func, "def") == 0) {
+        if (strcmp(func, "def") == 0) {
             lenv_def(e, syms->cell[i], a->cell[i + 1]);
         }
         if (strcmp(func, "=") == 0) {
@@ -552,7 +552,7 @@ lval *builtin_var(lenv* e, lval* a) {
 }
 
 lval* builtin_def(lenv* e, lval* a) { return builtin_var(e, a, "def"); }
-lval* builtin_put(lenv* e, lval* a) { return builtin_var(a, e, "="); }
+lval* builtin_put(lenv* e, lval* a) { return builtin_var(e, a, "="); }
 
 lval* builtin_ord(lenv* e, lval* a, char* op) {
     LASSERT_NUM(op, a, 2);
@@ -582,8 +582,8 @@ lval* builtin_cmp(lenv* e, lval* a, char* op) {
     return lval_num(r);
 }
 
-lval* builtin_eq(lenv* e, lval* a) { return_cmp(e, a, "=="); }
-lval* builtin_ne(lenv* e, lval* a) { return_cmp(e, a, "!="); }
+lval* builtin_eq(lenv* e, lval* a) { return builtin_cmp(e, a, "=="); }
+lval* builtin_ne(lenv* e, lval* a) { return builtin_cmp(e, a, "!="); }
 
 lval* builtin_if(lenv* e, lval* a) {
     LASSERT_NUM("if", a, 3);
@@ -607,7 +607,7 @@ lval* builtin_if(lenv* e, lval* a) {
 
 lval* lval_read(mpc_ast_t* t);
 
-lval* builting_load(lenv* e, lval* a) {
+lval* builtin_load(lenv* e, lval* a) {
     LASSERT_NUM("load", a, 1);
     LASSERT_TYPE("load", a, 0, LVAL_STR);
 
@@ -660,14 +660,14 @@ lval* builtin_error(lenv* e, lval* a) {
 
 void lenv_add_builtin(lenv* e, char* name, lbuiltin func) {
     lval* k = lval_sym(name);
-    lval* v = lval_fun(func);
+    lval* v = lval_builtin(func);
     lenv_put(e, k, v);
     lval_del(k); lval_del(v);
 }
 
 void lenv_add_builtins(lenv* e) {
     /* variable functions */
-    lenv_add_builtin("\\", builtin_lambda);
+    lenv_add_builtin(e, "\\", builtin_lambda);
     lenv_add_builtin(e, "def", builtin_def);
     lenv_add_builtin(e, "=", builtin_put);
 
@@ -720,7 +720,7 @@ lval* lval_call(lenv* e, lval* f, lval* a) {
             }
 
             lval* nsym = lval_pop(f->formals, 0);
-            lval_put(f->env, nsym, builtin_list(e, a));
+            lenv_put(f->env, nsym, builtin_list(e, a));
             lval_del(sym); lval_del(nsym);
             break;
         }
@@ -778,7 +778,7 @@ lval* lval_eval_sexpr(lenv* e, lval* v) {
     }
 
     /* call builtin with operator */
-    lval* result = f->fun(e, v);
+    lval* result = lval_call(e, f, v);
     lval_del(f);
     return result;
 }
